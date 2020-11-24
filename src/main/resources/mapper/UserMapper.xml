@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xingzi.mikasamessage.dao.UserDao">
+    <!--根据loginId查找用户-->
+    <sql id="sqlstr">
+          userId,
+          userNum,
+          nickname,
+          phone,
+          address,
+          headPortrait,
+          backimg,
+          sex,
+          password,
+        FROM
+    </sql>
+    <select id="getUserByUserNum" resultType="User">
+        SELECT
+              userId,
+              userNum,
+              nickname,
+              phone,
+              address,
+              headPortrait,
+              backimg,
+              sex,
+              password,
+              initial,
+              remark
+        FROM user
+        WHERE userNum =#{userNum}
+    </select>
+    <select id="getUserByUserId" resultType="User">
+        SELECT
+              userId,
+              userNum,
+              nickname,
+              phone,
+              address,
+              headPortrait,
+              backimg,
+              sex,
+              password,
+              initial,
+              remark
+        FROM user
+        WHERE userId =#{userId}
+    </select>
+    <select id="getChatMessages" resultType="ChatMessage">
+        SELECT
+           id ,
+           sendId ,
+           receiver ,
+           typeId ,
+           content ,
+           messageDate 
+        FROM  chatmessage 
+        WHERE id IN(
+             SELECT MAX(id)
+             FROM (
+                SELECT  DISTINCT receiver,MAX(id)AS id  FROM chatmessage
+                WHERE  sendId =#{sendId}
+                GROUP BY  receiver
+                UNION
+                SELECT  DISTINCT sendId,MAX(id)AS id FROM chatmessage
+                WHERE  receiver =#{sendId}
+                GROUP BY sendId ) s
+             GROUP BY receiver
+         )
+
+
+    </select>
+    <select id="getUser" resultType="User">
+        SELECT
+              userId,
+              userNum,
+              nickname,
+              phone,
+              address,
+              headPortrait,
+              backimg,
+              sex,
+              password,
+              initial,
+              remark
+        FROM user
+        WHERE userId =#{userId}
+    </select>
+    <insert id="addUser">
+        INSERT INTO user(
+            userNum,
+            nickname,
+            password,
+            initial
+        )
+        VALUES(
+            #{userNum},
+            #{nickname},
+            #{password},
+            #{initial}
+        )
+    </insert>
+    <select id="getFriendListByUserId" resultType="Friend">
+        SELECT
+	        id, userId, friendId
+        FROM
+            friend
+        WHERE userId=#{userId}
+    </select>
+    <select id="getSayList" resultType="Say">
+        SELECT 
+  sayId,
+  sayContent,
+  image1,
+  image2,
+  image3,
+  image4,
+  image5,
+  image6,
+  image7,
+  image8,
+  image9,
+  userNum,
+  sayDate 
+FROM
+  say 
+WHERE userNum IN(SELECT userNum FROM user WHERE userId IN(SELECT friendId FROM friend WHERE userId=#{userId}))OR userNum=#{userNum}
+ORDER BY sayDate desc
+    </select>
+    <select id="getPraiseListBySayId" resultType="Praise">
+        SELECT
+          praiseId,
+          userNum,
+          sayId,
+          praiseDate
+        FROM
+          praise
+          WHERE sayId=#{sayId}
+        ORDER BY praiseDate  DESC
+    </select>
+    <select id="getCommentListBySayId" resultType="Comment">
+        SELECT 
+          commentId,
+          userNum,
+          content,
+          image,
+          commentDate,
+          sayId
+        FROM
+          comment
+          WHERE sayId=#{sayId}
+        ORDER BY commentDate DESC
+    </select>
+    <select id="getAllUser" resultType="User">
+        SELECT 
+          userId,
+          userNum,
+          nickname,
+          phone,
+          address,
+          headPortrait,
+          backimg,
+          sex,
+          password,
+          remark,
+          initial 
+        FROM
+        user
+    </select>
+    <insert id="addSay">
+        INSERT INTO say (
+          sayContent,
+          image1,
+          image2,
+          image3,
+          image4,
+          image5,
+          image6,
+          image7,
+          image8,
+          image9,
+          userNum,
+          sayDate
+        )
+        VALUES
+        (
+            #{sayContent},
+            #{image1},
+            #{image2},
+            #{image3},
+            #{image4},
+            #{image5},
+            #{image6},
+            #{image7},
+            #{image8},
+            #{image9},
+            #{userNum},
+            #{sayDate}
+         ) ;
+    </insert>
+    <select id="getSayByUserNum" resultType="Say">
+        SELECT 
+  sayId,
+  sayContent,
+  image1,
+  image2,
+  image3,
+  image4,
+  image5,
+  image6,
+  image7,
+  image8,
+  image9,
+  userNum,
+  sayDate 
+FROM
+  say
+where userNum=#{userNum}
+
+    </select>
+    <insert id="addMessage">
+        INSERT INTO chatmessage (
+  sendId,
+  receiver,
+  typeId,
+  content,
+  messageDate
+) 
+VALUES
+  (
+    #{sendId},
+    #{receiver},
+    #{typeId},
+    #{content},
+    #{messageDate}
+  )
+
+    </insert>
+    <insert id="addPraise">
+        insert into praise (
+  userNum,
+  sayId,
+  praiseDate
+) 
+values
+  (
+   #{userNum},
+   #{sayId},
+   #{praiseDate}
+  );
+
+
+    </insert>
+    <delete id="delPraise">
+        delete  from praise where sayId=#{sayId}
+    </delete>
+    <insert id="addFriend">
+        INSERT INTO friend (userId, friendId)
+        VALUES
+        (#{userId}, #{friendId}) ;
+    </insert>
+    <select id="getMessageById" resultType="ChatMessage">
+           SELECT 
+  id,
+  sendId,
+  receiver,
+  typeId,
+  content,
+  messageDate
+ FROM chatmessage WHERE ((sendId=#{id}) AND (receiver=#{friendId})) OR((receiver =#{id})and (sendId=#{friendId}))
+LIMIT 20
+    </select>
+</mapper>
